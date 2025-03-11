@@ -1,7 +1,7 @@
 package com.example.restaurantapp.controller;
 
-import com.example.restaurantapp.dbmodel.Menu;
 import com.example.restaurantapp.request.menu.CreateMenuRequest;
+import com.example.restaurantapp.request.menu.InsertMenuRequest;
 import com.example.restaurantapp.request.menu.UpdateMenuRequest;
 import com.example.restaurantapp.response.menu.AllMenuResponse;
 import com.example.restaurantapp.response.menu.MenuResponse;
@@ -10,8 +10,6 @@ import lombok.RequiredArgsConstructor;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -40,8 +38,14 @@ public class MenuController {
     }
 
     @PostMapping("/update")
-    public ResponseEntity<List<Menu>> updateMenu(@RequestBody UpdateMenuRequest updateMenuRequest) {
+    public ResponseEntity<Void> updateMenu(@RequestBody UpdateMenuRequest updateMenuRequest) {
         menuService.updateMenu(updateMenuRequest);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/insert")
+    public ResponseEntity<Void> insertMenu(@RequestBody InsertMenuRequest insertMenuRequest) {
+        menuService.insertMenu(insertMenuRequest);
         return ResponseEntity.ok().build();
     }
 }

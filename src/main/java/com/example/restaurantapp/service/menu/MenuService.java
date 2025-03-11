@@ -1,18 +1,21 @@
 package com.example.restaurantapp.service.menu;
 
 import com.example.restaurantapp.common.CommonUtils;
+import com.example.restaurantapp.dataaccess.FoodItemsRepository;
 import com.example.restaurantapp.dataaccess.MenuRepository;
 import com.example.restaurantapp.dbmodel.FoodItem;
 import com.example.restaurantapp.dbmodel.Menu;
 import com.example.restaurantapp.exception.MenuAlreadyExistsException;
 import com.example.restaurantapp.exception.MenuNotFoundException;
-import com.example.restaurantapp.mapper.MenuMapper;
 import com.example.restaurantapp.request.menu.CreateMenuRequest;
+import com.example.restaurantapp.request.menu.InsertMenuRequest;
 import com.example.restaurantapp.request.menu.UpdateMenuRequest;
 import com.example.restaurantapp.response.menu.AllMenuResponse;
 import com.example.restaurantapp.response.menu.MenuResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,16 +29,16 @@ import java.util.stream.Collectors;
 public class MenuService {
 
     private final MenuRepository menuRepository;
+    private final FoodItemsRepository foodItemsRepository;
     private final MenuFactory menuFactory;
-    private final MenuMapper menuMapper;
 
-    //@Cacheable(value = "menuCache", key = "'allMenus'")
+    @Cacheable(value = "menuCache", key = "'allMenus'")
     public AllMenuResponse getMenu() {
         log.info("All menus requested");
         return new AllMenuResponse(menuRepository.findAll().stream().sorted(Comparator.comparing(Menu::getMenuId)).collect(Collectors.toList()));
     }
 
-    //@Cacheable(value = "menuCache", key = "#dayOfWeek")
+    @Cacheable(value = "menuCache", key = "#dayOfWeek")
     public MenuResponse getMenu(String dayOfWeek) {
         log.info("Menu requested for day: {}", dayOfWeek);
         Menu menu = menuRepository.findByDayOfWeek(dayOfWeek).orElseThrow(() -> new MenuNotFoundException("Menu for day '" + dayOfWeek + "' does not exist!"));
@@ -51,16 +54,16 @@ public class MenuService {
     }
 
     @Transactional
-    //@CacheEvict(value = "menuCache", allEntries = true)
+    @CacheEvict(value = "menuCache", allEntries = true)
     public void createMenu(CreateMenuRequest createMenuRequest) {
         log.info("Create menu service request : {},", createMenuRequest);
 
         // If there is a menu for the same day, throw "MenuAlreadyExistsException"
-        for(CreateMenuRequest.MenuItem menuItem : createMenuRequest.getMenuItemList()) {
+        createMenuRequest.getMenuItemList().forEach(menuItem -> {
             if (menuRepository.existsByDayOfWeek(menuItem.getDayOfWeek())) {
                 throw new MenuAlreadyExistsException("Menu for day '" + menuItem.getDayOfWeek() + "' already exists!");
             }
-        }
+        });
 
         // Create menu
         List<Menu> menus = menuFactory.createMenus(createMenuRequest.getMenuItemList());
@@ -74,7 +77,7 @@ public class MenuService {
     }
 
     @Transactional
-    //@CacheEvict(value = "menuCache", key = "#updateMenuRequest.getMenu().getDayOfWeek()")
+    @CacheEvict(value = "menuCache", key = "#updateMenuRequest.getMenu().getDayOfWeek()")
     public void updateMenu(UpdateMenuRequest updateMenuRequest) {
         log.info("Update menu service request : {},", updateMenuRequest.getMenu().getDayOfWeek());
 
@@ -102,6 +105,20 @@ public class MenuService {
         }
     }
 
+    @Transactional
+    @CacheEvict(value = "menuCache", allEntries = true)
+    public void insertMenu(InsertMenuRequest insertMenuRequest) {
+        log.info("Insert menu service request : {},", insertMenuRequest);
 
+        // If menuId or dayOfWeek is present in the request, user wants to add new food items to the existing menu, otherwise it is a new menu.
+        insertMenuRequest.getMenuList().forEach(menu -> {
+            if (menuRepository.existsByDayOfWeek(menu.getDayOfWeek())) {
+                foodItemsRepository.saveAll(menu.getFoodItems());
+            } else {
+                menuRepository.save(menu);
+            }
+        });
 
+        log.info("Menu or Foods inserted successfully");
+    }
 }

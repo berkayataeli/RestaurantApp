@@ -19,7 +19,6 @@ public class MenuFactory {
         return menuMapper.menuCreateRequestToMenuMapper(menuItem.getDayOfWeek(), menuMapper.foodItemListMapper(menuItem.getFoodItemRequestList()));
     }
 
-
     public List<Menu> createMenus(List<CreateMenuRequest.MenuItem> menuItems) {
         return menuItems.stream()
                 .map(this::createMenu)

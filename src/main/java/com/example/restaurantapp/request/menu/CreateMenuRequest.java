@@ -18,17 +18,6 @@ public class CreateMenuRequest {
     @AllArgsConstructor
     public static class MenuItem {
         private String dayOfWeek;
-        private List<FoodItemRequest> foodItemRequestList;
+        private List<FoodItemRequestDto> foodItemRequestList;
     }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class FoodItemRequest {
-        private String name;
-        private String type;
-        private String description;
-        private Double price;
-    }
-
 }
