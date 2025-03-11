@@ -11,10 +11,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,29 +29,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 public class MenuControllerTest {
 
-    @InjectMocks
     private MockMvc mockMvc;
+
+    @InjectMocks
+    private MenuController menuController;
 
     @Mock
     private MenuService menuService;
 
     @BeforeEach
-    void setup() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new MenuController(menuService)).build();
+    void init() {
+        MockitoAnnotations.initMocks(this);
+        LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
+        validator.afterPropertiesSet();
+
+        mockMvc = MockMvcBuilders.standaloneSetup(menuController)
+                .setValidator(validator)
+                .build();
+
     }
-
-    @Test
-    void testGetMenuByDayOfWeek_MenuNotFound() throws Exception {
-        String dayOfWeek = "Sunday";
-
-        when(menuService.getMenu(dayOfWeek)).thenThrow(new MenuNotFoundException("Menu not found"));
-
-        mockMvc.perform(get("/api/menu/getMenu/{dayOfWeek}", dayOfWeek)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Menu not found"));
-    }
-
 
     @Test
     @DisplayName("Test getMenu() - Should return all menu items")
@@ -83,10 +81,22 @@ public class MenuControllerTest {
     @Test
     @DisplayName("Test getMenu(dayOfWeek) - Should return 400 for invalid day of week")
     void testGetMenuByDayOfWeek_InvalidDay() throws Exception {
-        String invalidDay = "Funday";
+        String invalidDay = "Weekend";
 
         mockMvc.perform(get("/api/menu/getMenu/{dayOfWeek}", invalidDay)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testGetMenuByDayOfWeek_MenuNotFound() throws Exception {
+        String dayOfWeek = "Sunday";
+
+        when(menuService.getMenu(dayOfWeek)).thenThrow(new MenuNotFoundException("Menu not found"));
+
+        mockMvc.perform(get("/api/menu/getMenu/{dayOfWeek}", dayOfWeek)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Menu not found"));
     }
 }

@@ -1,5 +1,6 @@
 package com.example.restaurantapp.dbmodel;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,7 +16,8 @@ import java.math.BigDecimal;
 public class FoodItem {
 
     @Id
-    @Column(name = "FOOD_ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "FOOD_ID")
     private Long foodId;
 
     @Column(name = "NAME", nullable = false)
@@ -30,7 +32,8 @@ public class FoodItem {
     @Column(name = "PRICE", nullable = false)
     private BigDecimal price;
 
-    @ManyToOne
-    @JoinColumn(name = "MENU_ID")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "MENU_ID", nullable = false)
+    @JsonBackReference
     private Menu menu;
 }

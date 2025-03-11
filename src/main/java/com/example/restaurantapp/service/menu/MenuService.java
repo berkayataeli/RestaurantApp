@@ -1,5 +1,6 @@
 package com.example.restaurantapp.service.menu;
 
+import com.example.restaurantapp.common.CommonUtils;
 import com.example.restaurantapp.dataaccess.MenuRepository;
 import com.example.restaurantapp.dbmodel.FoodItem;
 import com.example.restaurantapp.dbmodel.Menu;
@@ -12,8 +13,6 @@ import com.example.restaurantapp.response.menu.AllMenuResponse;
 import com.example.restaurantapp.response.menu.MenuResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,13 +29,13 @@ public class MenuService {
     private final MenuFactory menuFactory;
     private final MenuMapper menuMapper;
 
-    @Cacheable(value = "menuCache", key = "'allMenus'")
+    //@Cacheable(value = "menuCache", key = "'allMenus'")
     public AllMenuResponse getMenu() {
         log.info("All menus requested");
         return new AllMenuResponse(menuRepository.findAll().stream().sorted(Comparator.comparing(Menu::getMenuId)).collect(Collectors.toList()));
     }
 
-    @Cacheable(value = "menuCache", key = "#dayOfWeek")
+    //@Cacheable(value = "menuCache", key = "#dayOfWeek")
     public MenuResponse getMenu(String dayOfWeek) {
         log.info("Menu requested for day: {}", dayOfWeek);
         Menu menu = menuRepository.findByDayOfWeek(dayOfWeek).orElseThrow(() -> new MenuNotFoundException("Menu for day '" + dayOfWeek + "' does not exist!"));
@@ -52,32 +51,35 @@ public class MenuService {
     }
 
     @Transactional
-    @CacheEvict(value = "menuCache", allEntries = true)
+    //@CacheEvict(value = "menuCache", allEntries = true)
     public void createMenu(CreateMenuRequest createMenuRequest) {
         log.info("Create menu service request : {},", createMenuRequest);
 
         // If there is a menu for the same day, throw "MenuAlreadyExistsException"
-        if (menuRepository.findByDayOfWeek(createMenuRequest.getDayOfWeek()).isPresent()) {
-            throw new MenuAlreadyExistsException("Menu for day '" + createMenuRequest.getDayOfWeek() + "' already exists!");
+        for(CreateMenuRequest.MenuItem menuItem : createMenuRequest.getMenuItemList()) {
+            if (menuRepository.existsByDayOfWeek(menuItem.getDayOfWeek())) {
+                throw new MenuAlreadyExistsException("Menu for day '" + menuItem.getDayOfWeek() + "' already exists!");
+            }
         }
 
         // Create menu
-        Menu menu = menuFactory.createMenu(
-                createMenuRequest.getDayOfWeek(),
-                menuMapper.foodItemListMapper(createMenuRequest.getFoodItemRequestList())
-        );
+        List<Menu> menus = menuFactory.createMenus(createMenuRequest.getMenuItemList());
 
-        menuRepository.save(menu);
-        log.info("Menu created");
+        menuRepository.saveAll(menus);
+        log.info("Menus created successfully for days: {}",
+                createMenuRequest.getMenuItemList().stream()
+                        .map(CreateMenuRequest.MenuItem::getDayOfWeek)
+                        .collect(Collectors.toList()));
+
     }
 
     @Transactional
-    @CacheEvict(value = "menuCache", key = "#updateMenuRequest.getMenu().getDayOfWeek()")
+    //@CacheEvict(value = "menuCache", key = "#updateMenuRequest.getMenu().getDayOfWeek()")
     public void updateMenu(UpdateMenuRequest updateMenuRequest) {
         log.info("Update menu service request : {},", updateMenuRequest.getMenu().getDayOfWeek());
 
-        Menu menu = menuRepository.findByDayOfWeek(updateMenuRequest.getMenu().getDayOfWeek())
-                .orElseThrow(() -> new MenuNotFoundException("Menu for day '" + updateMenuRequest.getMenu().getDayOfWeek() + "' not found!"));
+        Menu menu = menuRepository.findByMenuId(updateMenuRequest.getMenu().getMenuId())
+                .orElseThrow(() -> new MenuNotFoundException("Menu not found!"));
 
         // Update menu
         UpdateMenuStrategy updateMenuStrategy = determineStrategy(updateMenuRequest);
@@ -89,9 +91,9 @@ public class MenuService {
 
     // Determining which part of the menu to update
     private UpdateMenuStrategy determineStrategy(UpdateMenuRequest updateMenuRequest) {
-        if (updateMenuRequest.getMenu().getFoodItems() != null && updateMenuRequest.getMenu().getDayOfWeek() != null) {
+        if (CommonUtils.isEmpty(updateMenuRequest.getMenu().getFoodItems()) && updateMenuRequest.getMenu().getDayOfWeek() != null) {
             return new UpdateMenuFullStrategy();
-        } else if (updateMenuRequest.getMenu().getFoodItems() != null) {
+        } else if (CommonUtils.isEmpty(updateMenuRequest.getMenu().getFoodItems())) {
             return new UpdateMenuFoodItemsStrategy();
         } else if (updateMenuRequest.getMenu().getDayOfWeek() != null) {
             return new UpdateMenuDayOfWeekStrategy();
@@ -99,5 +101,7 @@ public class MenuService {
             throw new IllegalArgumentException("Invalid UpdateMenuRequest: No fields to update");
         }
     }
+
+
 
 }

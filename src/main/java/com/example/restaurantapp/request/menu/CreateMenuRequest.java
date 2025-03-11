@@ -11,8 +11,15 @@ import java.util.List;
 @AllArgsConstructor
 public class CreateMenuRequest {
 
-    private String dayOfWeek;
-    private List<FoodItemRequest> foodItemRequestList;
+    private List<MenuItem> menuItemList;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MenuItem {
+        private String dayOfWeek;
+        private List<FoodItemRequest> foodItemRequestList;
+    }
 
     @Data
     @NoArgsConstructor

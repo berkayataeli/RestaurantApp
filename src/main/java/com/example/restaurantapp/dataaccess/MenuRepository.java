@@ -7,5 +7,11 @@ import java.util.Optional;
 
 public interface MenuRepository extends JpaRepository<Menu, Long> {
 
+    Boolean existsByDayOfWeek(String dayOfWeek);
+
+    Optional<Menu> findByMenuId(Long menuId);
+
     Optional<Menu> findByDayOfWeek(String dayOfWeek);
+
+
 }
