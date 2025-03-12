@@ -29,4 +29,7 @@ public class Customer {
     @Column(name = "PHONE_NUMBER", nullable = false, unique = true)
     private String phoneNumber;
 
+    @Column(name = "ADDRESS", nullable = false, unique = true)
+    private String address;
+
 }

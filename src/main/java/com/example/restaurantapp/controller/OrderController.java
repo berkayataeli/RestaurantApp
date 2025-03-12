@@ -1,9 +1,12 @@
 package com.example.restaurantapp.controller;
 
+import com.example.restaurantapp.request.order.CreateOrderRequest;
+import com.example.restaurantapp.request.order.ListOrderRequest;
+import com.example.restaurantapp.response.menu.OrderResponse;
+import com.example.restaurantapp.service.order.OrderService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -11,5 +14,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/order")
 public class OrderController {
 
+    private final OrderService orderService;
+
+    //createOrder
+    @PostMapping("/createOrder")
+    public ResponseEntity<Void> createOrder(@RequestBody CreateOrderRequest createOrderRequest) {
+        orderService.createOrder(createOrderRequest);
+        return ResponseEntity.ok().build();
+    }
+
+    //view order by orderId
+    @PostMapping("/listOrdersByOrderId")
+    public ResponseEntity<OrderResponse> listOrdersByOrderId(@RequestBody ListOrderRequest listOrderRequest) {
+        return ResponseEntity.ok(orderService.listOrdersByOrderId(listOrderRequest));
+    }
+
+    //updateStatus
 
 }
