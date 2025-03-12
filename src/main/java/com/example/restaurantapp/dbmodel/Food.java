@@ -31,4 +31,10 @@ public class Food {
     @Column(name = "PRICE", nullable = false)
     private BigDecimal price;
 
+    @Column(name = "NUMBER_OF_ORDER")
+    private Integer numberOfOrder;
+
+    @Column(name = "ACTIVE")
+    private Boolean active;
+
 }

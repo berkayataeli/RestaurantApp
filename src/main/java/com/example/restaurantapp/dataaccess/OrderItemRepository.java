@@ -16,4 +16,6 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             "FROM Food f JOIN OrderItem oi ON f.foodId = oi.foodId " +
             "WHERE oi.orderId = :orderId")
     List<FoodOrderItemDto> findFoodOrderItemsByOrderId(@Param("orderId") Long orderId);
+
+    List<OrderItem> findAllByOrderId(Long orderId);
 }

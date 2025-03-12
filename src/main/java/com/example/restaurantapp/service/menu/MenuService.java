@@ -26,9 +26,9 @@ public class MenuService {
     @Cacheable(value = "menuCache", key = "#dayOfWeek")
     public MenuResponse listMenuByDay(String dayOfWeek) {
         log.info("Menu requested for day: {}", dayOfWeek);
-        Menu menu = menuRepository.findByDayOfWeek(dayOfWeek).orElseThrow(() -> new MenuNotFoundException("Menu for day '" + dayOfWeek + "' does not exist!"));
+        Menu menu = menuRepository.findByDayOfWeek(dayOfWeek).orElseThrow(() -> new MenuNotFoundException(dayOfWeek));
 
-        List<Food> foodList = foodRepository.findFoodsByMenuItemMenuIdOrderByTypeAscFoodIdAsc(menu.getMenuId());
+        List<Food> foodList = foodRepository.findActiveFoodsByMenuItemMenuIdOrderByTypeAscFoodIdAsc(menu.getMenuId());
 
         // sorting by type and id
 //        foodList.sort(Comparator.comparing(Food::getType)

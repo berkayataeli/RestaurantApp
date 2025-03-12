@@ -17,20 +17,17 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    //createOrder
     @PostMapping("/createOrder")
     public ResponseEntity<Void> createOrder(@RequestBody CreateOrderRequest createOrderRequest) {
         orderService.createOrder(createOrderRequest);
         return ResponseEntity.ok().build();
     }
 
-    //view order by orderId
     @PostMapping("/listOrdersByOrderId")
     public ResponseEntity<OrderResponse> listOrdersByOrderId(@RequestBody ListOrderRequest listOrderRequest) {
         return ResponseEntity.ok(orderService.listOrdersByOrderId(listOrderRequest));
     }
 
-    //updateStatus
     @PostMapping("/updateOrderStatus")
     public ResponseEntity<Void> updateOrderStatus(@RequestBody UpdateOrderStatusRequest updateOrderStatusRequest) {
         orderService.updateOrderStatus(updateOrderStatusRequest);
