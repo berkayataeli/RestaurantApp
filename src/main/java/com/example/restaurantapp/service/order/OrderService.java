@@ -6,9 +6,12 @@ import com.example.restaurantapp.dbmodel.OrderItem;
 import com.example.restaurantapp.dbmodel.Orders;
 import com.example.restaurantapp.dto.FoodOrderItemDto;
 import com.example.restaurantapp.dto.OrderCustomerDto;
+import com.example.restaurantapp.enums.OrderStatus;
+import com.example.restaurantapp.exception.OrderNotFoundException;
 import com.example.restaurantapp.mapper.OrderMapper;
 import com.example.restaurantapp.request.order.CreateOrderRequest;
 import com.example.restaurantapp.request.order.ListOrderRequest;
+import com.example.restaurantapp.request.order.UpdateOrderStatusRequest;
 import com.example.restaurantapp.response.menu.OrderResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,11 +33,11 @@ public class OrderService {
     public void createOrder(CreateOrderRequest createOrderRequest) {
         log.info("Create order function request: {}", createOrderRequest);
 
-        // create and insert orders by request
+        // generate and insert orders by request
         Orders orders = orderMapper.createOrdersMapper(createOrderRequest.getCustomerId());
         ordersRepository.save(orders);
 
-        // create and insert order item by request and orders
+        // generate and insert order item by request and orders
         Long orderId = ordersRepository.findTopByCustomerIdOrderByCreatedTimeDesc(createOrderRequest.getCustomerId()).getOrderId();
         OrderItem orderItem = orderMapper.createOrderItemMapper(orderId, createOrderRequest);
         orderItemRepository.save(orderItem);
@@ -52,6 +55,7 @@ public class OrderService {
         //get food and order_item details
         List<FoodOrderItemDto> foodOrderItemDTOList = orderItemRepository.findFoodOrderItemsByOrderId(listOrderRequest.getOrderId());
 
+        //generate OrderResponse
         List<OrderResponse.FoodDetailResponse> foodDetailResponseList = foodOrderItemDTOList.stream().map(orderMapper::foodDetailResponseMapper).toList();
         OrderResponse orderResponse = orderMapper.orderResponseMapper(orderCustomerDto, foodDetailResponseList);
 
@@ -59,5 +63,17 @@ public class OrderService {
         return orderResponse;
     }
 
+    @Transactional
+    public void updateOrderStatus(UpdateOrderStatusRequest updateOrderStatusRequest) {
+        log.info("updateOrderStatus function request: {}", updateOrderStatusRequest);
 
+        // get Orders by order_id
+        Orders orders = ordersRepository.findById(updateOrderStatusRequest.getOrderId())
+                .orElseThrow(() -> new OrderNotFoundException("Order Not Found for orderId=" + updateOrderStatusRequest.getOrderId()));
+
+        // save and flush after updated new status
+        orders.setStatus(OrderStatus.valueOf(updateOrderStatusRequest.getOrderStatus()).getValue());
+        ordersRepository.saveAndFlush(orders);
+        log.info("Order status updated successfully for order id: {}", updateOrderStatusRequest.getOrderId());
+    }
 }

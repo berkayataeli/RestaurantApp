@@ -2,6 +2,7 @@ package com.example.restaurantapp.controller;
 
 import com.example.restaurantapp.request.order.CreateOrderRequest;
 import com.example.restaurantapp.request.order.ListOrderRequest;
+import com.example.restaurantapp.request.order.UpdateOrderStatusRequest;
 import com.example.restaurantapp.response.menu.OrderResponse;
 import com.example.restaurantapp.service.order.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -30,5 +31,10 @@ public class OrderController {
     }
 
     //updateStatus
+    @PostMapping("/updateOrderStatus")
+    public ResponseEntity<Void> updateOrderStatus(@RequestBody UpdateOrderStatusRequest updateOrderStatusRequest) {
+        orderService.updateOrderStatus(updateOrderStatusRequest);
+        return ResponseEntity.ok().build();
+    }
 
 }
