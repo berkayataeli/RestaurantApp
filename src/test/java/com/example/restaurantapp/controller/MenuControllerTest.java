@@ -1,12 +1,9 @@
 package com.example.restaurantapp.controller;
 
-import com.example.restaurantapp.dbmodel.Menu;
 import com.example.restaurantapp.exception.MenuNotFoundException;
-import com.example.restaurantapp.response.menu.AllMenuResponse;
 import com.example.restaurantapp.response.menu.MenuResponse;
 import com.example.restaurantapp.service.menu.MenuService;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,15 +13,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(SpringExtension.class)
 public class MenuControllerTest {
@@ -37,66 +31,47 @@ public class MenuControllerTest {
     @Mock
     private MenuService menuService;
 
+    private MenuResponse dummyMenuResponse;
+
     @BeforeEach
-    void init() {
+    public void init() {
         MockitoAnnotations.initMocks(this);
-        LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
-        validator.afterPropertiesSet();
+        mockMvc = MockMvcBuilders.standaloneSetup(menuController).build();
 
-        mockMvc = MockMvcBuilders.standaloneSetup(menuController)
-                .setValidator(validator)
-                .build();
+        // Create a mock MenuResponse for the tests
+        MenuResponse.FoodDto foodDto = new MenuResponse.FoodDto();
+        foodDto.setName("Soup");
+        foodDto.setDescription("A tasty starter.");
 
+        dummyMenuResponse = new MenuResponse();
+        dummyMenuResponse.setDayOfWeek("Monday");
+        dummyMenuResponse.setFoodList(List.of(foodDto));
     }
 
     @Test
-    @DisplayName("Test getMenu() - Should return all menu items")
-    void testGetMenu() throws Exception {
-        List<Menu> menuList = new ArrayList<>();
-        menuList.add(new Menu(1L, "Monday", new ArrayList<>()));
-        AllMenuResponse allMenuResponse = new AllMenuResponse(menuList);
+    void testGetMenuByDay_ShouldReturnMenuResponse_WhenMenuExists() throws Exception {
+        String dayOfWeek = "Monday";
+        when(menuService.listMenuByDay(dayOfWeek)).thenReturn(dummyMenuResponse);
 
-        when(menuService.getMenu()).thenReturn(allMenuResponse);
-
-        mockMvc.perform(get("/api/menu/getMenu")
+        mockMvc.perform(get("/api/menu/{dayOfWeek}", dayOfWeek)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.menuList").isArray())
-                .andExpect(jsonPath("$.menuList[0].dayOfWeek").value("Monday"));
+                .andExpect(jsonPath("$.day").value("Monday"))
+                .andExpect(jsonPath("$.foodList[0].name").value("Soup"));
 
+        verify(menuService, times(1)).listMenuByDay(dayOfWeek);
     }
 
     @Test
-    @DisplayName("Test getMenu(dayOfWeek) - Should return menu for valid day of week")
-    void testGetMenuByDayOfWeek_ValidDay() throws Exception {
-        String dayOfWeek = "Monday";
-        MenuResponse menuResponse = new MenuResponse(); // Mock a valid response object
-        when(menuService.getMenu(dayOfWeek)).thenReturn(menuResponse);
+    void testGetMenuByDay_ShouldReturn404_WhenMenuDoesNotExist() throws Exception {
+        String dayOfWeek = "Friday";
+        when(menuService.listMenuByDay(dayOfWeek)).thenThrow(new MenuNotFoundException("Menu for day '" + dayOfWeek + "' does not exist!"));
 
-        mockMvc.perform(get("/api/menu/getMenu/{dayOfWeek}", dayOfWeek)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    @DisplayName("Test getMenu(dayOfWeek) - Should return 400 for invalid day of week")
-    void testGetMenuByDayOfWeek_InvalidDay() throws Exception {
-        String invalidDay = "Weekend";
-
-        mockMvc.perform(get("/api/menu/getMenu/{dayOfWeek}", invalidDay)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void testGetMenuByDayOfWeek_MenuNotFound() throws Exception {
-        String dayOfWeek = "Sunday";
-
-        when(menuService.getMenu(dayOfWeek)).thenThrow(new MenuNotFoundException("Menu not found"));
-
-        mockMvc.perform(get("/api/menu/getMenu/{dayOfWeek}", dayOfWeek)
+        mockMvc.perform(get("/api/menu/{dayOfWeek}", dayOfWeek)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Menu not found"));
+                .andExpect(jsonPath("$.message").value("Menu for day 'Monday' does not exist!"));
+
+        verify(menuService, times(1)).listMenuByDay(dayOfWeek);
     }
 }

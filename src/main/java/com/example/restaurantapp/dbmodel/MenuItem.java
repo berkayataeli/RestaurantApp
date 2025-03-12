@@ -6,18 +6,21 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "MENU", uniqueConstraints = @UniqueConstraint(columnNames = "day_of_week"))
+@Table(name = "MENU_ITEM")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Menu {
+public class MenuItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "MENU_ID")
+    @Column(name = "MENU_ITEM_ID")
+    private Long menuItemId;
+
+    @Column(name = "MENU_ID", nullable = false)
     private Long menuId;
 
-    @Column(name = "DAY_OF_WEEK", nullable = false, unique = true)
-    private String dayOfWeek;
+    @Column(name = "FOOD_ID", nullable = false)
+    private Long foodId;
 
 }

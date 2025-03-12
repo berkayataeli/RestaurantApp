@@ -1,11 +1,10 @@
 package com.example.restaurantapp.mapper;
 
-import com.example.restaurantapp.dbmodel.FoodItem;
-import com.example.restaurantapp.request.menu.FoodItemRequestDto;
+import com.example.restaurantapp.dbmodel.Food;
+import com.example.restaurantapp.response.menu.MenuResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
-import com.example.restaurantapp.dbmodel.Menu;
 
 import java.util.List;
 
@@ -15,8 +14,9 @@ import static com.example.restaurantapp.util.ApplicationConstants.MAPPER_COMPONE
 public interface MenuMapper {
 
     @Mapping(target = "dayOfWeek", source = "dayOfWeek")
-    @Mapping(target = "foodItems", source = "foodItems")
-    Menu menuCreateRequestToMenuMapper(String dayOfWeek, List<FoodItem> foodItems);
+    @Mapping(target = "foodList", source = "foodDtoList")
+    MenuResponse menuCreateMapper(String dayOfWeek, List<MenuResponse.FoodDto> foodDtoList);
 
-    List<FoodItem> foodItemListMapper(List<FoodItemRequestDto> foodItemRequestList);
+
+    MenuResponse.FoodDto foodToFoodDtoMapper(Food food);
 }
