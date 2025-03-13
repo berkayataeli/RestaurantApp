@@ -1,12 +1,14 @@
 package com.example.restaurantapp.common;
 
-import org.springframework.util.CollectionUtils;
-
-import java.util.Collection;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class CommonUtils {
 
-    public static boolean isEmpty(Collection collection) {
-        return !CollectionUtils.isEmpty(collection);
+    public static String asJsonString(final Object obj) {
+        try {
+            return new ObjectMapper().writeValueAsString(obj);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

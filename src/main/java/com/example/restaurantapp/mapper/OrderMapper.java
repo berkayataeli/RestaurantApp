@@ -33,9 +33,9 @@ public interface OrderMapper {
     }
 
     @Mapping(target = "orderId", source = "orderId")
-    @Mapping(target = "foodId", expression = "java(createOrderRequest.getFoodId())")
-    @Mapping(target = "quantity", expression = "java(createOrderRequest.getQuantity())")
-    OrderItem createOrderItemMapper(Long orderId, CreateOrderRequest createOrderRequest);
+    @Mapping(target = "foodId", expression = "java(orderDetail.getFoodId())")
+    @Mapping(target = "quantity", expression = "java(orderDetail.getQuantity())")
+    OrderItem createOrderItemMapper(Long orderId, CreateOrderRequest.OrderDetail orderDetail);
 
     @Mapping(target = "status", expression = "java(getOrderResponseStatus(orderCustomerDto.getStatus()))")
     @Mapping(target = "foodDetailResponseList", source = "foodDetailResponseList")

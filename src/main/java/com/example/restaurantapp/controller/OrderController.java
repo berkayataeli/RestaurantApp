@@ -6,6 +6,7 @@ import com.example.restaurantapp.request.order.UpdateOrderStatusRequest;
 import com.example.restaurantapp.response.menu.OrderResponse;
 import com.example.restaurantapp.service.order.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +26,7 @@ public class OrderController {
 
     @PostMapping("/listOrdersByOrderId")
     public ResponseEntity<OrderResponse> listOrdersByOrderId(@RequestBody ListOrderRequest listOrderRequest) {
-        return ResponseEntity.ok(orderService.listOrdersByOrderId(listOrderRequest));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(orderService.listOrdersByOrderId(listOrderRequest));
     }
 
     @PostMapping("/updateOrderStatus")

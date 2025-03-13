@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -46,8 +47,8 @@ public class OrderService {
 
         // generate and insert order item by request and orders
         Long orderId = ordersRepository.findTopByCustomerIdOrderByCreatedTimeDesc(createOrderRequest.getCustomerId()).getOrderId();
-        OrderItem orderItem = orderMapper.createOrderItemMapper(orderId, createOrderRequest);
-        orderItemRepository.save(orderItem);
+        List<OrderItem> orderItems = createOrderRequest.getOrderDetailList().stream().map(orderDetail -> orderMapper.createOrderItemMapper(orderId, orderDetail)).toList();
+        orderItemRepository.saveAll(orderItems);
 
         log.info("Order created successfully");
     }
@@ -55,7 +56,7 @@ public class OrderService {
     public OrderResponse listOrdersByOrderId(ListOrderRequest listOrderRequest) {
         log.info("listOrdersByOrderId called by : {}", listOrderRequest.getUserType());
 
-        return UserTypeEnum.CUSTOMER.name().equals(listOrderRequest.getUserType()) ?
+        return UserTypeEnum.RESTAURANT.name().equals(listOrderRequest.getUserType()) ?
                 customerListOrderService.listOrdersByOrderId(listOrderRequest)
                 : restaurantListOrderServiceDecorator.listOrdersByOrderId(listOrderRequest);
     }

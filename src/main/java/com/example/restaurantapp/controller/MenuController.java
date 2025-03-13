@@ -4,6 +4,7 @@ import com.example.restaurantapp.response.menu.MenuResponse;
 import com.example.restaurantapp.service.menu.MenuService;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.constraints.Pattern;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +20,6 @@ public class MenuController {
     public ResponseEntity<MenuResponse> listMenuByDay(@PathVariable @Pattern(regexp = "^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)$",
             message = "Invalid dayOfWeek. Must be one of: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday")
                                                     String dayOfWeek) {
-        return ResponseEntity.ok(menuService.listMenuByDay(dayOfWeek));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(menuService.listMenuByDay(dayOfWeek));
     }
 }

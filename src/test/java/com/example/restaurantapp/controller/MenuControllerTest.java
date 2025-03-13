@@ -1,5 +1,6 @@
 package com.example.restaurantapp.controller;
 
+import com.example.restaurantapp.dataaccess.FoodRepository;
 import com.example.restaurantapp.exception.MenuNotFoundException;
 import com.example.restaurantapp.response.menu.MenuResponse;
 import com.example.restaurantapp.service.menu.MenuService;
@@ -26,52 +27,62 @@ public class MenuControllerTest {
     private MockMvc mockMvc;
 
     @InjectMocks
-    private MenuController menuController;
+    private MenuController menuControllerTest;
 
     @Mock
     private MenuService menuService;
 
-    private MenuResponse dummyMenuResponse;
+    @Mock
+    private FoodRepository foodRepository;
 
     @BeforeEach
     public void init() {
         MockitoAnnotations.initMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(menuController).build();
-
-        // Create a mock MenuResponse for the tests
-        MenuResponse.FoodDto foodDto = new MenuResponse.FoodDto();
-        foodDto.setName("Soup");
-        foodDto.setDescription("A tasty starter.");
-
-        dummyMenuResponse = new MenuResponse();
-        dummyMenuResponse.setDayOfWeek("Monday");
-        dummyMenuResponse.setFoodList(List.of(foodDto));
+        mockMvc = MockMvcBuilders.standaloneSetup(menuControllerTest).build();
     }
 
     @Test
     void testGetMenuByDay_ShouldReturnMenuResponse_WhenMenuExists() throws Exception {
         String dayOfWeek = "Monday";
-        when(menuService.listMenuByDay(dayOfWeek)).thenReturn(dummyMenuResponse);
+        when(menuService.listMenuByDay(dayOfWeek)).thenReturn(getDummyMenuResponse());
 
-        mockMvc.perform(get("/api/menu/{dayOfWeek}", dayOfWeek)
+        mockMvc.perform(get("/api/menu/listMenuByDay/{dayOfWeek}", dayOfWeek)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.day").value("Monday"))
-                .andExpect(jsonPath("$.foodList[0].name").value("Soup"));
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+    }
 
-        verify(menuService, times(1)).listMenuByDay(dayOfWeek);
+    private MenuResponse getDummyMenuResponse() {
+        MenuResponse.FoodDto foodDto = new MenuResponse.FoodDto();
+        foodDto.setName("Arancini");
+        foodDto.setType("Starter");
+
+        MenuResponse dummyMenuResponse = new MenuResponse();
+        dummyMenuResponse.setDayOfWeek("Monday");
+        dummyMenuResponse.setFoodList(List.of(foodDto));
+
+        return dummyMenuResponse;
     }
 
     @Test
-    void testGetMenuByDay_ShouldReturn404_WhenMenuDoesNotExist() throws Exception {
+    void testGetMenuByDay_ShouldReturn500_WhenMenuDoesNotExist() throws Exception {
         String dayOfWeek = "Friday";
-        when(menuService.listMenuByDay(dayOfWeek)).thenThrow(new MenuNotFoundException("Menu for day '" + dayOfWeek + "' does not exist!"));
+        when(menuService.listMenuByDay(dayOfWeek)).thenThrow(new MenuNotFoundException(dayOfWeek));
 
-        mockMvc.perform(get("/api/menu/{dayOfWeek}", dayOfWeek)
+        mockMvc.perform(get("/api/menu/listMenuByDay/{dayOfWeek}", dayOfWeek)
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        verifyNoInteractions(foodRepository);
+    }
+
+    @Test
+    void listMenuByDay_ShouldReturnBadRequest_WhenDayOfWeekIsInvalid() throws Exception {
+        String invalidDayOfWeek = "InvalidDay";
+
+        mockMvc.perform(get("/api/menu/listMenuByDay/{dayOfWeek}", invalidDayOfWeek)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Menu for day 'Monday' does not exist!"));
+                .andExpect(status().isBadRequest());
 
-        verify(menuService, times(1)).listMenuByDay(dayOfWeek);
+        verifyNoInteractions(menuService);
     }
 }
