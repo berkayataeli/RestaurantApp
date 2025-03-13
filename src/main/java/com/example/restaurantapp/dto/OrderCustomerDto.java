@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OrderCustomerDto {
 
+    private Integer numberOfOrder;
     private String customerName;
     private String customerSurname;
     private String phoneNumber;

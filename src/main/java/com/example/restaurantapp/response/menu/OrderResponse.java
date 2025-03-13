@@ -11,6 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderResponse {
+    private Integer numberOfOrder; //Analytics data for restaurant
     private String customerName;
     private String customerSurname;
     private String phoneNumber;

@@ -32,4 +32,7 @@ public class Customer {
     @Column(name = "ADDRESS", nullable = false, unique = true)
     private String address;
 
+    @Column(name = "NUMBER_OF_ORDER")
+    private Integer numberOfOrder;
+
 }

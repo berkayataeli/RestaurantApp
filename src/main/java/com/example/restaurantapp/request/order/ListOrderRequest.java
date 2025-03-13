@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ListOrderRequest {
-
+    private String userType;
     private Long orderId;
 }
