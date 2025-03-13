@@ -22,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
+
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -71,6 +73,7 @@ public class OrderService {
 
         // save and flush after updated new status
         orders.setStatus(OrderStatus.valueOf(updateOrderStatusRequest.getOrderStatus()).getValue());
+        orders.setUpdatedTime(new Timestamp(System.currentTimeMillis()));
         ordersRepository.saveAndFlush(orders);
 
         // increment foods number of order if status is delivered
