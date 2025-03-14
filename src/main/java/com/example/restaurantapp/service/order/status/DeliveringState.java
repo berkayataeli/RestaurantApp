@@ -14,7 +14,7 @@ public class DeliveringState implements OrderStatusState {
         else if (OrderStatus.CANCELLED.name().equals(nextState))
             orderStatusContex.setState(new CanceledState());
         else
-            throw new IllegalUpdateStatusException("Invalid next state: " + nextState);
+            throw new IllegalUpdateStatusException(nextState);
 
         log.info("Order status updated to: {}", nextState);
     }

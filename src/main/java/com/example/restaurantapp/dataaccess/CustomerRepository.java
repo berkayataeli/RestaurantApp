@@ -12,4 +12,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     @Query(value = "UPDATE Customer SET numberOfOrder = numberOfOrder + 1 WHERE customerId = :customerId")
     void incrementNumberOfOrderNative(@Param("customerId") Long customerId);
 
+    @Query("SELECT c.numberOfOrder FROM Customer c JOIN Orders o ON c.customerId = o.customerId WHERE o.orderId = :orderId")
+    Integer findNumberOfOrdersByOrderId(@Param("orderId") Long orderId);
+
 }

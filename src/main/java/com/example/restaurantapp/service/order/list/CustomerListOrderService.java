@@ -4,8 +4,8 @@ import com.example.restaurantapp.dataaccess.OrderItemRepository;
 import com.example.restaurantapp.dataaccess.OrdersRepository;
 import com.example.restaurantapp.dto.FoodOrderItemDto;
 import com.example.restaurantapp.dto.OrderCustomerDto;
+import com.example.restaurantapp.exception.OrderNotFoundException;
 import com.example.restaurantapp.mapper.OrderMapper;
-import com.example.restaurantapp.request.order.ListOrderRequest;
 import com.example.restaurantapp.response.menu.OrderResponse;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,19 +24,21 @@ public class CustomerListOrderService {
         this.orderMapper = orderMapper;
     }
 
-    public OrderResponse listOrdersByOrderId(ListOrderRequest listOrderRequest) {
-        log.info("Customer listOrdersByOrderId function request: {}", listOrderRequest);
+    public OrderResponse listOrdersByOrderId(Long orderId) {
         //get Orders status and customer details infos
-        OrderCustomerDto orderCustomerDto = ordersRepository.findOrderCustomerByOrderId(listOrderRequest.getOrderId());
+        OrderCustomerDto orderCustomerDto = ordersRepository.findOrderCustomerByOrderId(orderId);
 
+        if (orderCustomerDto == null) {
+            throw new OrderNotFoundException(orderId);
+        }
         //get food and order_item details
-        List<FoodOrderItemDto> foodOrderItemDTOList = orderItemRepository.findFoodOrderItemsByOrderId(listOrderRequest.getOrderId());
+        List<FoodOrderItemDto> foodOrderItemDTOList = orderItemRepository.findFoodOrderItemsByOrderId(orderId);
 
         //generate OrderResponse
         List<OrderResponse.FoodDetailResponse> foodDetailResponseList = foodOrderItemDTOList.stream().map(orderMapper::foodDetailResponseMapper).toList();
         OrderResponse orderResponse = orderMapper.orderResponseMapper(orderCustomerDto, foodDetailResponseList);
 
-        log.info("Customer Order returned by {} response {}, ", listOrderRequest.getOrderId(), orderResponse);
+        log.info("Customer Order returned {} for {}, ", orderResponse, orderId);
         return orderResponse;
     }
 }

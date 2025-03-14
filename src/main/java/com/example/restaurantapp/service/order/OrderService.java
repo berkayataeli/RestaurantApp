@@ -56,9 +56,9 @@ public class OrderService {
     public OrderResponse listOrdersByOrderId(ListOrderRequest listOrderRequest) {
         log.info("listOrdersByOrderId called by : {}", listOrderRequest.getUserType());
 
-        return UserTypeEnum.RESTAURANT.name().equals(listOrderRequest.getUserType()) ?
-                customerListOrderService.listOrdersByOrderId(listOrderRequest)
-                : restaurantListOrderServiceDecorator.listOrdersByOrderId(listOrderRequest);
+        return UserTypeEnum.CUSTOMER.name().equals(listOrderRequest.getUserType()) ?
+                customerListOrderService.listOrdersByOrderId(listOrderRequest.getOrderId())
+                : restaurantListOrderServiceDecorator.listOrdersByOrderId(listOrderRequest.getOrderId());
     }
 
     @Transactional

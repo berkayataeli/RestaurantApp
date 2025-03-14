@@ -1,7 +1,7 @@
 package com.example.restaurantapp.service.order.list;
 
-import com.example.restaurantapp.dataaccess.OrdersRepository;
-import com.example.restaurantapp.request.order.ListOrderRequest;
+import com.example.restaurantapp.dataaccess.CustomerRepository;
+import com.example.restaurantapp.enums.OrderPriorityEnum;
 import com.example.restaurantapp.response.menu.OrderResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,22 +10,42 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class RestaurantListOrderServiceDecorator extends ListOrderServiceDecorator {
 
     @Autowired
-    private OrdersRepository ordersRepository;
+    private CustomerRepository customerRepository;
 
     public RestaurantListOrderServiceDecorator(CustomerListOrderService customerListOrderService) {
         super(customerListOrderService);
     }
 
     @Override
-    public OrderResponse listOrdersByOrderId(ListOrderRequest listOrderRequest){
-        log.info("Restaurant listOrdersByOrderId function request: {}", listOrderRequest);
-        OrderResponse orderResponse = super.listOrdersByOrderId(listOrderRequest);
+    public OrderResponse listOrdersByOrderId(Long orderId) {
+        OrderResponse orderResponse = super.listOrdersByOrderId(orderId);
 
-        //get customer's numberOfOrder info for restaurant user
-        Integer numberOfOrder = ordersRepository.findOrderCustomerByOrderId(listOrderRequest.getOrderId()).getNumberOfOrder();
-        orderResponse.setNumberOfOrder(numberOfOrder);
-        log.info("Restaurant Order returned by {} response {}, ", listOrderRequest.getOrderId(), orderResponse);
+        //generate additional restaurant infos
+        if (orderResponse.getStatus().equals("PREPARING")) {
+            orderResponse.setPriority(generatePriority(orderResponse));
+        }
+        orderResponse.setNumberOfOrder(getCustomerNumberOfOrder(orderId));
+
+        log.info("Restaurant Order returned {} for {}, ", orderResponse, orderId);
         return orderResponse;
+    }
+
+    private Integer getCustomerNumberOfOrder(Long orderId) {
+        return customerRepository.findNumberOfOrdersByOrderId(orderId);
+    }
+
+    private String generatePriority(OrderResponse orderResponse) {
+        long timeDifference = Math.abs(System.currentTimeMillis() - orderResponse.getCreatedTime().getTime());
+
+        //If 1 hour has passed since the order was created -> high priority
+        //Else If half an hour has passed -> medium priority
+        //Otherwise -> low priority
+        if(timeDifference > 1000*60*60)
+            return OrderPriorityEnum.HIGH.name();
+        else if(timeDifference > 1000*60*30)
+            return OrderPriorityEnum.MEDIUM.name();
+        else
+            return OrderPriorityEnum.LOW.name();
     }
 
 }

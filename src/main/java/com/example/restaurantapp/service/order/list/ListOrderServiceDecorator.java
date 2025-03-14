@@ -1,6 +1,5 @@
 package com.example.restaurantapp.service.order.list;
 
-import com.example.restaurantapp.request.order.ListOrderRequest;
 import com.example.restaurantapp.response.menu.OrderResponse;
 
 public abstract class ListOrderServiceDecorator extends CustomerListOrderService {
@@ -13,7 +12,7 @@ public abstract class ListOrderServiceDecorator extends CustomerListOrderService
     }
 
     @Override
-    public OrderResponse listOrdersByOrderId(ListOrderRequest listOrderRequest) {
-        return customerListOrderService.listOrdersByOrderId(listOrderRequest);
+    public OrderResponse listOrdersByOrderId(Long orderId) {
+        return customerListOrderService.listOrdersByOrderId(orderId);
     }
 }
