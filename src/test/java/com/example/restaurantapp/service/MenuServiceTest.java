@@ -60,7 +60,7 @@ public class MenuServiceTest {
         dummyFood.setType("Starter");
         dummyFood.setActive(true);
 
-        MenuResponse.FoodDto dummyFoodDto = new MenuResponse.FoodDto("Arancini", "Starter", null, null);
+        MenuResponse.FoodDto dummyFoodDto = new MenuResponse.FoodDto(1L, "Arancini", "Starter", null, null);
         MenuResponse dummyMenuResponse = new MenuResponse(dayOfWeek, List.of(dummyFoodDto));
 
         when(menuRepository.findByDayOfWeek(dayOfWeek)).thenReturn(Optional.of(dummyMenu));

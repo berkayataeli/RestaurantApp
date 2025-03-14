@@ -1,4 +1,4 @@
-package com.example.restaurantapp.response.menu;
+package com.example.restaurantapp.response.order;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -19,6 +19,7 @@ public class MenuResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class FoodDto {
+        private Long foodId;
         private String name;
         private String type;
         private String description;

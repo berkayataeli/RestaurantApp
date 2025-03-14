@@ -1,9 +1,9 @@
 package com.example.restaurantapp.controller;
 
-import com.example.restaurantapp.request.order.CreateOrderRequest;
-import com.example.restaurantapp.request.order.ListOrderRequest;
-import com.example.restaurantapp.request.order.UpdateOrderStatusRequest;
-import com.example.restaurantapp.response.menu.OrderResponse;
+import com.example.restaurantapp.request.order.*;
+import com.example.restaurantapp.response.order.CustomerOrdersResponse;
+import com.example.restaurantapp.response.order.OrderResponse;
+import com.example.restaurantapp.response.order.OrdersByStatusResponse;
 import com.example.restaurantapp.service.order.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -24,7 +24,19 @@ public class OrderController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/listOrdersByOrderId")
+    //list orders function for restaurant user
+    @PostMapping("/listOrdersByOrderStatus")
+    public ResponseEntity<OrdersByStatusResponse> listOrdersByOrderStatus(@RequestBody ListOrderByStatusRequest listOrderByStatusRequest) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(orderService.listOrdersByOrderStatus(listOrderByStatusRequest));
+    }
+
+    //list orders function for customer user
+    @PostMapping("/listOrdersByCustomerId")
+    public ResponseEntity<CustomerOrdersResponse> listOrdersByCustomerId(@RequestBody CustomerOrdersRequest customerOrdersRequest) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(orderService.listOrdersByCustomerId(customerOrdersRequest));
+    }
+
+    @PostMapping("/orderDetail")
     public ResponseEntity<OrderResponse> listOrdersByOrderId(@RequestBody ListOrderRequest listOrderRequest) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(orderService.listOrdersByOrderId(listOrderRequest));
     }

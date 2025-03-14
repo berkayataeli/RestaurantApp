@@ -2,7 +2,7 @@ package com.example.restaurantapp.service.order.list;
 
 import com.example.restaurantapp.dataaccess.CustomerRepository;
 import com.example.restaurantapp.enums.OrderPriorityEnum;
-import com.example.restaurantapp.response.menu.OrderResponse;
+import com.example.restaurantapp.response.order.OrderResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 

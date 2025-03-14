@@ -6,7 +6,7 @@ import com.example.restaurantapp.dto.FoodOrderItemDto;
 import com.example.restaurantapp.dto.OrderCustomerDto;
 import com.example.restaurantapp.exception.OrderNotFoundException;
 import com.example.restaurantapp.mapper.OrderMapper;
-import com.example.restaurantapp.response.menu.OrderResponse;
+import com.example.restaurantapp.response.order.OrderResponse;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;

@@ -6,7 +6,7 @@ import com.example.restaurantapp.dto.FoodOrderItemDto;
 import com.example.restaurantapp.dto.OrderCustomerDto;
 import com.example.restaurantapp.enums.OrderStatus;
 import com.example.restaurantapp.request.order.CreateOrderRequest;
-import com.example.restaurantapp.response.menu.OrderResponse;
+import com.example.restaurantapp.response.order.OrderResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;

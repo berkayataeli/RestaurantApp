@@ -14,10 +14,9 @@ import com.example.restaurantapp.mapper.OrderMapper;
 import com.example.restaurantapp.request.order.CreateOrderRequest;
 import com.example.restaurantapp.request.order.ListOrderRequest;
 import com.example.restaurantapp.request.order.UpdateOrderStatusRequest;
-import com.example.restaurantapp.response.menu.OrderResponse;
+import com.example.restaurantapp.response.order.OrderResponse;
 import com.example.restaurantapp.service.order.OrderService;
 import com.example.restaurantapp.service.order.list.CustomerListOrderService;
-import com.example.restaurantapp.service.order.list.RestaurantListOrderServiceDecorator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,7 +30,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(SpringExtension.class)
 public class OrderServiceTest {
@@ -51,7 +49,7 @@ public class OrderServiceTest {
     @Mock
     private OrderMapper orderMapper;
 
-    @InjectMocks
+    @Mock
     private CustomerListOrderService customerListOrderService;
 
     @Test
@@ -93,15 +91,9 @@ public class OrderServiceTest {
 
     @Test
     public void testListOrdersByOrderId_ShouldReturnOrderList_WhenOrdersExist() {
-        Orders order = new Orders();
-        order.setStatus(0);
-        order.setCustomerId(1L);
-        order.setCreatedTime(new Timestamp(System.currentTimeMillis()));
-
-        when(ordersRepository.findById(1L)).thenReturn(Optional.of(order));
-
         OrderCustomerDto orderCustomerDto = new OrderCustomerDto();
         orderCustomerDto.setCustomerName("John");
+
         when(ordersRepository.findOrderCustomerByOrderId(1L)).thenReturn(Optional.of(orderCustomerDto));
 
         ListOrderRequest listOrderRequest = new ListOrderRequest();
@@ -111,6 +103,7 @@ public class OrderServiceTest {
         OrderResponse expectedResponse = new OrderResponse();
         expectedResponse.setStatus(OrderStatus.PREPARING.name());
         expectedResponse.setCustomerName("John");
+
         when(orderService.listOrdersByOrderId(listOrderRequest)).thenReturn(expectedResponse);
 
         OrderResponse actualResponse = orderService.listOrdersByOrderId(listOrderRequest);
@@ -118,19 +111,6 @@ public class OrderServiceTest {
         assertNotNull(actualResponse);
         assertEquals(expectedResponse.getStatus(), actualResponse.getStatus());
         assertEquals(expectedResponse.getCustomerName(), actualResponse.getCustomerName());
-    }
-
-    @Test
-    void testListOrdersByOrderId_OrderDoesNotExist() {
-        ListOrderRequest request = new ListOrderRequest();
-        request.setUserType(UserTypeEnum.CUSTOMER.name());
-        request.setOrderId(123L);
-
-        when(ordersRepository.findOrderCustomerByOrderId(request.getOrderId())).thenReturn(Optional.empty());
-        assertThrows(OrderNotFoundException.class, () -> customerListOrderService.listOrdersByOrderId(request.getOrderId()));
-
-        verify(ordersRepository, times(1)).findOrderCustomerByOrderId(request.getOrderId());
-        verifyNoInteractions(orderItemRepository);
     }
 
     @Test

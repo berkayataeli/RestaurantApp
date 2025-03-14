@@ -10,10 +10,10 @@ import com.example.restaurantapp.enums.UserTypeEnum;
 import com.example.restaurantapp.exception.IllegalUpdateStatusException;
 import com.example.restaurantapp.exception.OrderNotFoundException;
 import com.example.restaurantapp.mapper.OrderMapper;
-import com.example.restaurantapp.request.order.CreateOrderRequest;
-import com.example.restaurantapp.request.order.ListOrderRequest;
-import com.example.restaurantapp.request.order.UpdateOrderStatusRequest;
-import com.example.restaurantapp.response.menu.OrderResponse;
+import com.example.restaurantapp.request.order.*;
+import com.example.restaurantapp.response.order.CustomerOrdersResponse;
+import com.example.restaurantapp.response.order.OrderResponse;
+import com.example.restaurantapp.response.order.OrdersByStatusResponse;
 import com.example.restaurantapp.service.order.list.CustomerListOrderService;
 import com.example.restaurantapp.service.order.list.RestaurantListOrderServiceDecorator;
 import com.example.restaurantapp.service.order.status.OrderStatusContex;
@@ -96,5 +96,13 @@ public class OrderService {
     private void incrementNumberOfOrder(Long customerId) {
         customerRepository.incrementNumberOfOrderNative(customerId);
         log.info("Number of order incremented successfully for customer id: {}", customerId);
+    }
+
+    public OrdersByStatusResponse listOrdersByOrderStatus(ListOrderByStatusRequest listOrderByStatusRequest) {
+        return null;
+    }
+
+    public CustomerOrdersResponse listOrdersByCustomerId(CustomerOrdersRequest customerOrdersRequest) {
+        return null;
     }
 }

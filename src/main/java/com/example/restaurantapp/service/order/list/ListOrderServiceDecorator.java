@@ -1,6 +1,6 @@
 package com.example.restaurantapp.service.order.list;
 
-import com.example.restaurantapp.response.menu.OrderResponse;
+import com.example.restaurantapp.response.order.OrderResponse;
 
 public abstract class ListOrderServiceDecorator extends CustomerListOrderService {
 

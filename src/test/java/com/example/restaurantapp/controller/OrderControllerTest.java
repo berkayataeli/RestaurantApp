@@ -3,7 +3,7 @@ package com.example.restaurantapp.controller;
 import com.example.restaurantapp.enums.OrderStatus;
 import com.example.restaurantapp.enums.UserTypeEnum;
 import com.example.restaurantapp.request.order.ListOrderRequest;
-import com.example.restaurantapp.response.menu.OrderResponse;
+import com.example.restaurantapp.response.order.OrderResponse;
 import com.example.restaurantapp.service.order.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ public class OrderControllerTest {
         Mockito.when(orderService.listOrdersByOrderId(any(ListOrderRequest.class)))
                 .thenReturn(getDummyOrderResponse());
 
-        mockMvc.perform(post("/api/order/listOrdersByOrderId")
+        mockMvc.perform(post("/api/order/orderDetail")
                         .content(asJsonString(getDummyListOrderRequest())).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
