@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface OrdersRepository extends JpaRepository<Orders, Long> {
 
@@ -15,6 +17,6 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
     @Query("SELECT new com.example.restaurantapp.dto.OrderCustomerDto(c.name, c.surname, c.phoneNumber, c.address, o.status, o.createdTime) " +
             "FROM Orders o JOIN Customer c ON o.customerId = c.customerId " +
             "WHERE o.orderId = :orderId")
-    OrderCustomerDto findOrderCustomerByOrderId(@Param("orderId") Long orderId);
+    Optional<OrderCustomerDto> findOrderCustomerByOrderId(@Param("orderId") Long orderId);
 
 }

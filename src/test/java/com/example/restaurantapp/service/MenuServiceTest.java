@@ -76,6 +76,7 @@ public class MenuServiceTest {
         assertEquals("Arancini", result.getFoodList().get(0).getName());
 
         verify(menuRepository, times(1)).findByDayOfWeek(dayOfWeek);
+        verify(foodRepository, times(1)).findActiveFoodsByMenuItemMenuIdOrderByTypeAscFoodIdAsc(1L);
     }
 
 }

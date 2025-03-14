@@ -10,6 +10,7 @@ import com.example.restaurantapp.response.menu.OrderResponse;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 public class CustomerListOrderService {
@@ -26,9 +27,9 @@ public class CustomerListOrderService {
 
     public OrderResponse listOrdersByOrderId(Long orderId) {
         //get Orders status and customer details infos
-        OrderCustomerDto orderCustomerDto = ordersRepository.findOrderCustomerByOrderId(orderId);
+        Optional<OrderCustomerDto> orderCustomerDto = ordersRepository.findOrderCustomerByOrderId(orderId);
 
-        if (orderCustomerDto == null) {
+        if (orderCustomerDto.isEmpty()) {
             throw new OrderNotFoundException(orderId);
         }
         //get food and order_item details
@@ -36,7 +37,7 @@ public class CustomerListOrderService {
 
         //generate OrderResponse
         List<OrderResponse.FoodDetailResponse> foodDetailResponseList = foodOrderItemDTOList.stream().map(orderMapper::foodDetailResponseMapper).toList();
-        OrderResponse orderResponse = orderMapper.orderResponseMapper(orderCustomerDto, foodDetailResponseList);
+        OrderResponse orderResponse = orderMapper.orderResponseMapper(orderCustomerDto.get(), foodDetailResponseList);
 
         log.info("Customer Order returned {} for {}, ", orderResponse, orderId);
         return orderResponse;

@@ -12,6 +12,9 @@ public class RestaurantListOrderServiceDecorator extends ListOrderServiceDecorat
     @Autowired
     private CustomerRepository customerRepository;
 
+    private static final Long oneHour = 1000*60*60L;
+    private static final Long halfHour = 1000*60*30L;
+
     public RestaurantListOrderServiceDecorator(CustomerListOrderService customerListOrderService) {
         super(customerListOrderService);
     }
@@ -40,9 +43,9 @@ public class RestaurantListOrderServiceDecorator extends ListOrderServiceDecorat
         //If 1 hour has passed since the order was created -> high priority
         //Else If half an hour has passed -> medium priority
         //Otherwise -> low priority
-        if(timeDifference > 1000*60*60)
+        if(timeDifference > oneHour)
             return OrderPriorityEnum.HIGH.name();
-        else if(timeDifference > 1000*60*30)
+        else if(timeDifference > halfHour)
             return OrderPriorityEnum.MEDIUM.name();
         else
             return OrderPriorityEnum.LOW.name();
