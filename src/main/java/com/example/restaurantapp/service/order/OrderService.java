@@ -5,6 +5,8 @@ import com.example.restaurantapp.dataaccess.OrderItemRepository;
 import com.example.restaurantapp.dataaccess.OrdersRepository;
 import com.example.restaurantapp.dbmodel.OrderItem;
 import com.example.restaurantapp.dbmodel.Orders;
+import com.example.restaurantapp.dto.CustomersOrderDto;
+import com.example.restaurantapp.dto.FoodOrderItemDto;
 import com.example.restaurantapp.enums.OrderStatus;
 import com.example.restaurantapp.enums.UserTypeEnum;
 import com.example.restaurantapp.exception.IllegalUpdateStatusException;
@@ -24,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -99,10 +103,56 @@ public class OrderService {
     }
 
     public OrdersByStatusResponse listOrdersByOrderStatus(ListOrderByStatusRequest listOrderByStatusRequest) {
-        return null;
+        log.info("listOrdersByOrderStatus function request: {}", listOrderByStatusRequest);
+        // get orders by status
+        List<Orders> orders = ordersRepository.findAllByStatusOrderByCreatedTimeDesc(OrderStatus.valueOf(listOrderByStatusRequest.getOrderStatus()).getValue());
+
+        if(orders == null || orders.isEmpty())
+            throw new OrderNotFoundException(listOrderByStatusRequest.getOrderStatus());
+
+        // get all food datas and create a map by matching food data with orders
+        List<Long> orderIds = orders.stream().map(Orders::getOrderId).toList();
+        Map<Long, List<FoodOrderItemDto>> foodDetailResponseMap = getFoodDetailResponseList(orderIds);
+
+        // generate order response with food details
+        List<OrdersByStatusResponse.OrderDetails> orderResponsesByStatus = orders.stream()
+                .map(order -> orderMapper.mapOrderToOrderDetails(order, foodDetailResponseMap.get(order.getOrderId())))
+                .toList();
+
+        log.info("listOrdersByOrderStatus returned successfully for order status: {}", listOrderByStatusRequest.getOrderStatus());
+        return new OrdersByStatusResponse(orderResponsesByStatus);
     }
 
     public CustomerOrdersResponse listOrdersByCustomerId(CustomerOrdersRequest customerOrdersRequest) {
-        return null;
+        log.info("listOrdersByCustomerId function request: {}", customerOrdersRequest);
+        // get all orders that the customer has
+        List<Orders> orders = ordersRepository.findAllByCustomerId(customerOrdersRequest.getCustomerId());
+
+        if(orders == null || orders.isEmpty())
+            throw new OrderNotFoundException(customerOrdersRequest.getCustomerId(), "Customer has no orders");
+
+        // get all orders ids and get customer infos
+        List<Long> orderIds = orders.stream().map(Orders::getOrderId).toList();
+        List<CustomersOrderDto> customersOrdersDtos = ordersRepository.findOrderCustomersByOrderIdInOrderByCreatedTime(orderIds);
+
+        // get all food datas and create a map by matching food data with orders
+        Map<Long, List<FoodOrderItemDto>> foodDetailResponseMap = getFoodDetailResponseList(orderIds);
+
+        // generate CustomerOrderResponse with customersOrdersDtos and foodOrderItemMap
+        List<CustomerOrdersResponse.CustomerOrderDetail> customerOrderDetails =
+                customersOrdersDtos.stream()
+                        .map(customersOrderDto -> orderMapper.customerOrderDetailMapper(
+                                customersOrderDto,
+                                foodDetailResponseMap.get(customersOrderDto.getOrderId())
+                        ))
+                        .collect(Collectors.toList());
+
+        log.info("listOrdersByCustomerId returned successfully for customerId: {}", customerOrdersRequest.getCustomerId());
+        return new CustomerOrdersResponse(customerOrderDetails);
+    }
+
+    Map<Long, List<FoodOrderItemDto>> getFoodDetailResponseList(List<Long> orderIds) {
+        return orderItemRepository.findFoodOrderItemsByOrderIdIn(orderIds).parallelStream()
+                .collect(Collectors.groupingBy(FoodOrderItemDto::getOrderId));
     }
 }

@@ -36,7 +36,7 @@ public class OrderController {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(orderService.listOrdersByCustomerId(customerOrdersRequest));
     }
 
-    @PostMapping("/orderDetail")
+    @PostMapping("/listOrdersByOrderId")
     public ResponseEntity<OrderResponse> listOrdersByOrderId(@RequestBody ListOrderRequest listOrderRequest) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(orderService.listOrdersByOrderId(listOrderRequest));
     }

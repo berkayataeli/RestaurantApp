@@ -59,7 +59,7 @@ public class CustomerListOrderServiceTest {
         OrderCustomerDto orderCustomerDto = new OrderCustomerDto("John", "Doe", "1234567890", "123 Street", 1, null);
         when(ordersRepository.findOrderCustomerByOrderId(orderId)).thenReturn(Optional.of(orderCustomerDto));
 
-        FoodOrderItemDto foodOrderItemDto = new FoodOrderItemDto("Pizza", new BigDecimal("12.5"), 2);
+        FoodOrderItemDto foodOrderItemDto = new FoodOrderItemDto(1L, "Pizza", new BigDecimal("12.5"), 2);
         when(orderItemRepository.findFoodOrderItemsByOrderId(orderId)).thenReturn(List.of(foodOrderItemDto));
 
         OrderResponse.FoodDetailResponse foodDetailResponse = new OrderResponse.FoodDetailResponse("Pizza",2, new BigDecimal("12.5"));

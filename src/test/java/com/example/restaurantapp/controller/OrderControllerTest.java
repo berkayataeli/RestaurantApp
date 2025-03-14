@@ -45,7 +45,7 @@ public class OrderControllerTest {
         Mockito.when(orderService.listOrdersByOrderId(any(ListOrderRequest.class)))
                 .thenReturn(getDummyOrderResponse());
 
-        mockMvc.perform(post("/api/order/orderDetail")
+        mockMvc.perform(post("/api/order/listOrdersByOrderId")
                         .content(asJsonString(getDummyListOrderRequest())).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));

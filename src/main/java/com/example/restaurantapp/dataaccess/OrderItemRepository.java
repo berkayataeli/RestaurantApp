@@ -12,9 +12,14 @@ import java.util.List;
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
-    @Query("SELECT new com.example.restaurantapp.dto.FoodOrderItemDto(f.name, f.price, oi.quantity) " +
+    @Query("SELECT new com.example.restaurantapp.dto.FoodOrderItemDto(oi.orderId, f.name, f.price, oi.quantity) " +
             "FROM Food f JOIN OrderItem oi ON f.foodId = oi.foodId " +
             "WHERE oi.orderId = :orderId")
     List<FoodOrderItemDto> findFoodOrderItemsByOrderId(@Param("orderId") Long orderId);
+
+    @Query("SELECT new com.example.restaurantapp.dto.FoodOrderItemDto(oi.orderId, f.name, f.price, oi.quantity) " +
+            "FROM Food f JOIN OrderItem oi ON f.foodId = oi.foodId " +
+            "WHERE oi.orderId IN :orderIds")
+    List<FoodOrderItemDto> findFoodOrderItemsByOrderIdIn(@Param("orderIds") List<Long> orderId);
 
 }

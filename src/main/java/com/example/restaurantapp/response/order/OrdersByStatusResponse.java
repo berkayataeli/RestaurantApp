@@ -1,5 +1,6 @@
 package com.example.restaurantapp.response.order;
 
+import com.example.restaurantapp.dto.FoodOrderItemDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,6 +22,6 @@ public class OrdersByStatusResponse {
         private Long orderId;
         private Timestamp createdTime;
         private Timestamp updatedTime;
-        private List<OrderResponse.FoodDetailResponse> foodDetailResponseList;
+        private List<FoodOrderItemDto> foodOrderItemDtos;
     }
 }
