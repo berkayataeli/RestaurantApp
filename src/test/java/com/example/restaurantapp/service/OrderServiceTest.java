@@ -5,6 +5,8 @@ import com.example.restaurantapp.dataaccess.OrderItemRepository;
 import com.example.restaurantapp.dataaccess.OrdersRepository;
 import com.example.restaurantapp.dbmodel.OrderItem;
 import com.example.restaurantapp.dbmodel.Orders;
+import com.example.restaurantapp.dto.CustomersOrderDto;
+import com.example.restaurantapp.dto.FoodOrderItemDto;
 import com.example.restaurantapp.dto.OrderCustomerDto;
 import com.example.restaurantapp.enums.OrderStatus;
 import com.example.restaurantapp.enums.UserTypeEnum;
@@ -13,18 +15,29 @@ import com.example.restaurantapp.exception.OrderNotFoundException;
 import com.example.restaurantapp.mapper.OrderMapper;
 import com.example.restaurantapp.request.order.CreateOrderRequest;
 import com.example.restaurantapp.request.order.ListOrderRequest;
+import com.example.restaurantapp.request.order.OrderSearchRequest;
 import com.example.restaurantapp.request.order.UpdateOrderStatusRequest;
+import com.example.restaurantapp.response.order.CustomerOrdersResponse;
 import com.example.restaurantapp.response.order.OrderResponse;
+import com.example.restaurantapp.response.order.OrderSearchResponse;
+import com.example.restaurantapp.response.order.OrdersByStatusResponse;
 import com.example.restaurantapp.service.order.OrderService;
 import com.example.restaurantapp.service.order.detail.CustomerListOrderService;
+import com.example.restaurantapp.service.order.search.CustomerAndStatusSearchStrategy;
+import com.example.restaurantapp.service.order.search.CustomerSearchStrategy;
+import com.example.restaurantapp.service.order.search.SearchStrategy;
+import com.example.restaurantapp.service.order.search.StatusSearchStrategy;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.sql.Timestamp;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -51,6 +64,19 @@ public class OrderServiceTest {
 
     @Mock
     private CustomerListOrderService customerListOrderService;
+
+    @Mock
+    private CustomerSearchStrategy customerSearchStrategy;
+
+    @Mock
+    private StatusSearchStrategy statusSearchStrategy;
+
+    @Mock
+    private CustomerAndStatusSearchStrategy customerAndStatusSearchStrategy;
+
+    @Mock
+    private List<SearchStrategy> searchStrategies;
+
 
     @Test
     void createOrder_ShouldCreateOrderSuccessfully() {
@@ -179,6 +205,66 @@ public class OrderServiceTest {
         verify(ordersRepository, times(1)).saveAndFlush(mockOrder);
     }
 
+    @Test
+    void testSearch_ReturnsOrderSearchResponse_WithValidRequest() {
+        OrderSearchRequest request = new OrderSearchRequest();
+        request.setCustomerId(1L);
+        request.setStatus("DELIVERED");
 
+        Orders orders = new Orders();
+        orders.setOrderId(1L);
+
+        CustomersOrderDto customersOrderDto = new CustomersOrderDto();
+        customersOrderDto.setOrderId(1L);
+
+        FoodOrderItemDto foodOrderItemDto = new FoodOrderItemDto();
+        foodOrderItemDto.setOrderId(1L);
+
+        List<Orders> ordersList = List.of(orders);
+
+        when(ordersRepository.findAll(ArgumentMatchers.<Specification<Orders>>any())).thenReturn(ordersList);
+        when(orderItemRepository.findFoodOrderItemsByOrderIdIn(List.of(1L))).thenReturn(List.of(foodOrderItemDto));
+        when(ordersRepository.findOrderCustomersByOrderIdInOrderByCreatedTime(List.of(1L))).thenReturn(List.of(customersOrderDto));
+        when(orderMapper.mapOrderToOrderDetails(any(), any())).thenReturn(new OrdersByStatusResponse.OrderDetails());
+        when(orderMapper.customerOrderDetailMapper(any(), any())).thenReturn(new CustomerOrdersResponse.CustomerOrderDetail());
+
+        OrderSearchResponse response = orderService.search(request);
+
+        assertNotNull(response);
+        verify(ordersRepository, times(1)).findAll(ArgumentMatchers.<Specification<Orders>>any());
+    }
+
+    @Test
+    void testSearch_ThrowsOrderNotFoundException_WithNoOrdersFound() {
+        OrderSearchRequest request = new OrderSearchRequest();
+        request.setCustomerId(1L);
+        request.setStatus("DELIVERED");
+
+        when(ordersRepository.findAll(any(Specification.class))).thenReturn(Collections.emptyList());
+
+        assertThrows(OrderNotFoundException.class, () -> orderService.search(request));
+        verify(ordersRepository, times(1)).findAll(ArgumentMatchers.<Specification<Orders>>any());
+    }
+
+    @Test
+    void testSearch_ReturnsOrderSearchResponse_WithStatusOnlyRequest() {
+        OrderSearchRequest request = new OrderSearchRequest();
+        request.setStatus("DELIVERED");
+
+        Orders orders = new Orders();
+        orders.setOrderId(1L);
+
+        FoodOrderItemDto foodOrderItemDto = new FoodOrderItemDto();
+        foodOrderItemDto.setOrderId(1L);
+
+        when(ordersRepository.findAll(ArgumentMatchers.<Specification<Orders>>any())).thenReturn(List.of(orders));
+        when(orderItemRepository.findFoodOrderItemsByOrderIdIn(List.of(1L))).thenReturn(List.of(foodOrderItemDto));
+        when(orderMapper.mapOrderToOrderDetails(any(), any())).thenReturn(new OrdersByStatusResponse.OrderDetails());
+
+        OrderSearchResponse response = orderService.search(request);
+
+        assertNotNull(response);
+        verify(ordersRepository, times(1)).findAll(ArgumentMatchers.<Specification<Orders>>any());
+    }
 
 }

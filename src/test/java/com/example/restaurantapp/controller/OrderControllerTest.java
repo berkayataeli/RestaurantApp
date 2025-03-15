@@ -3,7 +3,11 @@ package com.example.restaurantapp.controller;
 import com.example.restaurantapp.enums.OrderStatus;
 import com.example.restaurantapp.enums.UserTypeEnum;
 import com.example.restaurantapp.request.order.ListOrderRequest;
+import com.example.restaurantapp.request.order.OrderSearchRequest;
+import com.example.restaurantapp.response.order.CustomerOrdersResponse;
 import com.example.restaurantapp.response.order.OrderResponse;
+import com.example.restaurantapp.response.order.OrderSearchResponse;
+import com.example.restaurantapp.response.order.OrdersByStatusResponse;
 import com.example.restaurantapp.service.order.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,6 +69,30 @@ public class OrderControllerTest {
         orderResponse.setCustomerName("Name");
 
         return orderResponse;
+    }
+
+    @Test
+    void testSearchOrders_ShouldReturnSearchResponse_WhenRequestIsValid() throws Exception {
+        Mockito.when(orderService.search(any(OrderSearchRequest.class)))
+                .thenReturn(getDummyOrderSearchResponse());
+
+        mockMvc.perform(post("/api/order/search")
+                        .content(asJsonString(getDummyOrderSearchRequest())).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+    }
+
+    private OrderSearchRequest getDummyOrderSearchRequest() {
+        OrderSearchRequest orderSearchRequest = new OrderSearchRequest();
+        orderSearchRequest.setCustomerId(1L);
+        orderSearchRequest.setStatus(OrderStatus.PREPARING.name());
+        return orderSearchRequest;
+    }
+
+    private OrderSearchResponse getDummyOrderSearchResponse() {
+        OrdersByStatusResponse ordersByStatusResponse = new OrdersByStatusResponse();
+        CustomerOrdersResponse customerOrdersResponse = new CustomerOrdersResponse();
+        return new OrderSearchResponse(ordersByStatusResponse, customerOrdersResponse);
     }
 
 }
