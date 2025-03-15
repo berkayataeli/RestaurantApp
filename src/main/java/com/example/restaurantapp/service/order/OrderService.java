@@ -19,7 +19,7 @@ import com.example.restaurantapp.response.order.OrderSearchResponse;
 import com.example.restaurantapp.response.order.OrdersByStatusResponse;
 import com.example.restaurantapp.service.order.detail.CustomerListOrderService;
 import com.example.restaurantapp.service.order.detail.RestaurantListOrderServiceDecorator;
-import com.example.restaurantapp.service.order.search.OrderSearchSpecification;
+import com.example.restaurantapp.service.order.search.SearchStrategy;
 import com.example.restaurantapp.service.order.status.OrderStatusContex;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +43,7 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final CustomerListOrderService customerListOrderService;
     private final RestaurantListOrderServiceDecorator restaurantListOrderServiceDecorator;
+    private final List<SearchStrategy> searchStrategies;
 
     @Transactional
     public void createOrder(CreateOrderRequest createOrderRequest) {
@@ -111,7 +112,7 @@ public class OrderService {
         boolean hasCustomerId = orderSearchRequest.getCustomerId() != null && orderSearchRequest.getCustomerId() != 0L;
 
         //get orders by dynamic filter
-        List<Orders> orders = ordersRepository.findAll(getSpec(orderSearchRequest, hasCustomerId, hasStatus));
+        List<Orders> orders = getOrdersByCombinedSpec(orderSearchRequest);
 
         //is there any order control
         if (orders.isEmpty()) {
@@ -143,25 +144,19 @@ public class OrderService {
         //generate dynamic response
         OrderSearchResponse orderSearchResponse = generateSearchResponse(orders, foodDetailResponseMap, customersOrdersDtos, hasCustomerId, hasStatus);
 
-
         log.info("search returned successfully for order status: {}, customerId: {}, response:{}", orderSearchRequest.getStatus(), orderSearchRequest.getCustomerId(), orderSearchResponse);
         return orderSearchResponse;
     }
 
-    private Specification<Orders> getSpec(OrderSearchRequest orderSearchRequest, boolean hasCustomerId, boolean hasStatus) {
-        Specification<Orders> spec = Specification.where(null);
-        //dynamic filtering
-        if (hasCustomerId) {
-            spec = spec.and(OrderSearchSpecification.withCustomerId(orderSearchRequest.getCustomerId()));
-        }
-        if (hasStatus) {
-            spec = spec.and(OrderSearchSpecification.withStatus(orderSearchRequest.getStatus()));
-        }
+    private List<Orders> getOrdersByCombinedSpec(OrderSearchRequest orderSearchRequest) {
+        // find the right strategy and create specification
+        Specification<Orders> combinedSpec = searchStrategies.stream()
+                .filter(strategy -> strategy.isApplicable(orderSearchRequest))
+                .map(strategy -> strategy.buildSpecification(orderSearchRequest))
+                .reduce(Specification::and)
+                .orElse(null);
 
-        if (spec.equals(Specification.where(null)))
-            throw new RuntimeException("No filter has been applied for search");
-
-        return spec;
+        return ordersRepository.findAll(combinedSpec);
     }
 
     private OrderSearchResponse generateSearchResponse(List<Orders> orders, Map<Long, List<FoodOrderItemDto>> foodDetailResponseMap, List<CustomersOrderDto> customersOrdersDtos, boolean hasCustomerId, boolean hasStatus) {
