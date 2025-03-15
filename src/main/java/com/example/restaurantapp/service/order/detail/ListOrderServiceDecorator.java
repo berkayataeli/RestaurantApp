@@ -1,4 +1,4 @@
-package com.example.restaurantapp.service.order.list;
+package com.example.restaurantapp.service.order.detail;
 
 import com.example.restaurantapp.response.order.OrderResponse;
 

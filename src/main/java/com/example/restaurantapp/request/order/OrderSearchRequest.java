@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CustomerOrdersRequest {
+public class OrderSearchRequest {
     private Long customerId;
+    private String status;
 }

@@ -16,7 +16,7 @@ import com.example.restaurantapp.request.order.ListOrderRequest;
 import com.example.restaurantapp.request.order.UpdateOrderStatusRequest;
 import com.example.restaurantapp.response.order.OrderResponse;
 import com.example.restaurantapp.service.order.OrderService;
-import com.example.restaurantapp.service.order.list.CustomerListOrderService;
+import com.example.restaurantapp.service.order.detail.CustomerListOrderService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -104,9 +104,9 @@ public class OrderServiceTest {
         expectedResponse.setStatus(OrderStatus.PREPARING.name());
         expectedResponse.setCustomerName("John");
 
-        when(orderService.listOrdersByOrderId(listOrderRequest)).thenReturn(expectedResponse);
+        when(orderService.detail(listOrderRequest)).thenReturn(expectedResponse);
 
-        OrderResponse actualResponse = orderService.listOrdersByOrderId(listOrderRequest);
+        OrderResponse actualResponse = orderService.detail(listOrderRequest);
 
         assertNotNull(actualResponse);
         assertEquals(expectedResponse.getStatus(), actualResponse.getStatus());

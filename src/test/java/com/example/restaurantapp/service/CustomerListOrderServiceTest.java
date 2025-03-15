@@ -9,7 +9,7 @@ import com.example.restaurantapp.exception.OrderNotFoundException;
 import com.example.restaurantapp.mapper.OrderMapper;
 import com.example.restaurantapp.request.order.ListOrderRequest;
 import com.example.restaurantapp.response.order.OrderResponse;
-import com.example.restaurantapp.service.order.list.CustomerListOrderService;
+import com.example.restaurantapp.service.order.detail.CustomerListOrderService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

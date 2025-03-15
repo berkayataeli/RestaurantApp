@@ -15,12 +15,15 @@ import com.example.restaurantapp.mapper.OrderMapper;
 import com.example.restaurantapp.request.order.*;
 import com.example.restaurantapp.response.order.CustomerOrdersResponse;
 import com.example.restaurantapp.response.order.OrderResponse;
+import com.example.restaurantapp.response.order.OrderSearchResponse;
 import com.example.restaurantapp.response.order.OrdersByStatusResponse;
-import com.example.restaurantapp.service.order.list.CustomerListOrderService;
-import com.example.restaurantapp.service.order.list.RestaurantListOrderServiceDecorator;
+import com.example.restaurantapp.service.order.detail.CustomerListOrderService;
+import com.example.restaurantapp.service.order.detail.RestaurantListOrderServiceDecorator;
+import com.example.restaurantapp.service.order.search.OrderSearchSpecification;
 import com.example.restaurantapp.service.order.status.OrderStatusContex;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,8 +60,8 @@ public class OrderService {
         log.info("Order created successfully");
     }
 
-    public OrderResponse listOrdersByOrderId(ListOrderRequest listOrderRequest) {
-        log.info("listOrdersByOrderId called by : {}", listOrderRequest.getUserType());
+    public OrderResponse detail(ListOrderRequest listOrderRequest) {
+        log.info("detail called by : {}", listOrderRequest.getUserType());
 
         return UserTypeEnum.CUSTOMER.name().equals(listOrderRequest.getUserType()) ?
                 customerListOrderService.listOrdersByOrderId(listOrderRequest.getOrderId())
@@ -102,57 +105,99 @@ public class OrderService {
         log.info("Number of order incremented successfully for customer id: {}", customerId);
     }
 
-    public OrdersByStatusResponse listOrdersByOrderStatus(ListOrderByStatusRequest listOrderByStatusRequest) {
-        log.info("listOrdersByOrderStatus function request: {}", listOrderByStatusRequest);
-        // get orders by status
-        List<Orders> orders = ordersRepository.findAllByStatusOrderByCreatedTimeDesc(OrderStatus.valueOf(listOrderByStatusRequest.getOrderStatus()).getValue());
+    public OrderSearchResponse search(OrderSearchRequest orderSearchRequest) {
+        log.info("search function request: {}", orderSearchRequest);
+        boolean hasStatus = orderSearchRequest.getStatus() != null;
+        boolean hasCustomerId = orderSearchRequest.getCustomerId() != null && orderSearchRequest.getCustomerId() != 0L;
 
-        if(orders == null || orders.isEmpty())
-            throw new OrderNotFoundException(listOrderByStatusRequest.getOrderStatus());
+        //get orders by dynamic filter
+        List<Orders> orders = ordersRepository.findAll(getSpec(orderSearchRequest, hasCustomerId, hasStatus));
 
-        // get all food datas and create a map by matching food data with orders
+        //is there any order control
+        if (orders.isEmpty()) {
+            if (hasStatus && !hasCustomerId) {
+                throw new OrderNotFoundException(orderSearchRequest.getStatus());
+            } else if (!hasStatus && hasCustomerId) {
+                throw new OrderNotFoundException(orderSearchRequest.getCustomerId(), "Customer has no orders");
+            } else {
+                throw new OrderNotFoundException(
+                        orderSearchRequest.getCustomerId(),
+                        orderSearchRequest.getStatus(),
+                        "Customer has no orders with status"
+                );
+            }
+        }
+
+        //get orders
         List<Long> orderIds = orders.stream().map(Orders::getOrderId).toList();
+
+        //has customerId then get customer infos by orders
+        List<CustomersOrderDto> customersOrdersDtos = new java.util.ArrayList<>();
+        if (hasCustomerId) {
+            customersOrdersDtos = ordersRepository.findOrderCustomersByOrderIdInOrderByCreatedTime(orderIds);
+        }
+
+        //get orders food details matched with order id
         Map<Long, List<FoodOrderItemDto>> foodDetailResponseMap = getFoodDetailResponseList(orderIds);
 
-        // generate order response with food details
-        List<OrdersByStatusResponse.OrderDetails> orderResponsesByStatus = orders.stream()
-                .map(order -> orderMapper.mapOrderToOrderDetails(order, foodDetailResponseMap.get(order.getOrderId())))
-                .toList();
+        //generate dynamic response
+        OrderSearchResponse orderSearchResponse = generateSearchResponse(orders, foodDetailResponseMap, customersOrdersDtos, hasCustomerId, hasStatus);
 
-        log.info("listOrdersByOrderStatus returned successfully for order status: {}", listOrderByStatusRequest.getOrderStatus());
-        return new OrdersByStatusResponse(orderResponsesByStatus);
+
+        log.info("search returned successfully for order status: {}, customerId: {}, response:{}", orderSearchRequest.getStatus(), orderSearchRequest.getCustomerId(), orderSearchResponse);
+        return orderSearchResponse;
     }
 
-    public CustomerOrdersResponse listOrdersByCustomerId(CustomerOrdersRequest customerOrdersRequest) {
-        log.info("listOrdersByCustomerId function request: {}", customerOrdersRequest);
-        // get all orders that the customer has
-        List<Orders> orders = ordersRepository.findAllByCustomerId(customerOrdersRequest.getCustomerId());
+    private Specification<Orders> getSpec(OrderSearchRequest orderSearchRequest, boolean hasCustomerId, boolean hasStatus) {
+        Specification<Orders> spec = Specification.where(null);
+        //dynamic filtering
+        if (hasCustomerId) {
+            spec = spec.and(OrderSearchSpecification.withCustomerId(orderSearchRequest.getCustomerId()));
+        }
+        if (hasStatus) {
+            spec = spec.and(OrderSearchSpecification.withStatus(orderSearchRequest.getStatus()));
+        }
 
-        if(orders == null || orders.isEmpty())
-            throw new OrderNotFoundException(customerOrdersRequest.getCustomerId(), "Customer has no orders");
+        if (spec.equals(Specification.where(null)))
+            throw new RuntimeException("No filter has been applied for search");
 
-        // get all orders ids and get customer infos
-        List<Long> orderIds = orders.stream().map(Orders::getOrderId).toList();
-        List<CustomersOrderDto> customersOrdersDtos = ordersRepository.findOrderCustomersByOrderIdInOrderByCreatedTime(orderIds);
-
-        // get all food datas and create a map by matching food data with orders
-        Map<Long, List<FoodOrderItemDto>> foodDetailResponseMap = getFoodDetailResponseList(orderIds);
-
-        // generate CustomerOrderResponse with customersOrdersDtos and foodOrderItemMap
-        List<CustomerOrdersResponse.CustomerOrderDetail> customerOrderDetails =
-                customersOrdersDtos.stream()
-                        .map(customersOrderDto -> orderMapper.customerOrderDetailMapper(
-                                customersOrderDto,
-                                foodDetailResponseMap.get(customersOrderDto.getOrderId())
-                        ))
-                        .collect(Collectors.toList());
-
-        log.info("listOrdersByCustomerId returned successfully for customerId: {}", customerOrdersRequest.getCustomerId());
-        return new CustomerOrdersResponse(customerOrderDetails);
+        return spec;
     }
 
-    Map<Long, List<FoodOrderItemDto>> getFoodDetailResponseList(List<Long> orderIds) {
+    private OrderSearchResponse generateSearchResponse(List<Orders> orders, Map<Long, List<FoodOrderItemDto>> foodDetailResponseMap, List<CustomersOrderDto> customersOrdersDtos, boolean hasCustomerId, boolean hasStatus) {
+        if (hasCustomerId && hasStatus) {
+            return new OrderSearchResponse(
+                    new OrdersByStatusResponse(createOrderDetailList(orders, foodDetailResponseMap)),
+                    new CustomerOrdersResponse(createCustomerOrderDetailList(customersOrdersDtos, foodDetailResponseMap))
+            );
+        } else if (hasStatus) {
+            return new OrderSearchResponse(
+                    new OrdersByStatusResponse(createOrderDetailList(orders, foodDetailResponseMap))
+            );
+        }else {
+            return new OrderSearchResponse(
+                    new CustomerOrdersResponse(createCustomerOrderDetailList(customersOrdersDtos, foodDetailResponseMap))
+            );
+        }
+    }
+
+    private Map<Long, List<FoodOrderItemDto>> getFoodDetailResponseList(List<Long> orderIds) {
         return orderItemRepository.findFoodOrderItemsByOrderIdIn(orderIds).parallelStream()
                 .collect(Collectors.groupingBy(FoodOrderItemDto::getOrderId));
+    }
+
+    private List<CustomerOrdersResponse.CustomerOrderDetail> createCustomerOrderDetailList(List<CustomersOrderDto> customersOrderDtos, Map<Long, List<FoodOrderItemDto>> foodOrderItemDtoMap) {
+        return customersOrderDtos.stream()
+                .map(customersOrderDto -> orderMapper.customerOrderDetailMapper(
+                        customersOrderDto,
+                        foodOrderItemDtoMap.get(customersOrderDto.getOrderId())
+                ))
+                .toList();
+    }
+
+    private List<OrdersByStatusResponse.OrderDetails> createOrderDetailList(List<Orders> orders, Map<Long, List<FoodOrderItemDto>> foodDetailResponseMap) {
+        return orders.stream()
+                .map(order -> orderMapper.mapOrderToOrderDetails(order, foodDetailResponseMap.get(order.getOrderId())))
+                .toList();
     }
 }

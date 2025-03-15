@@ -1,4 +1,4 @@
-package com.example.restaurantapp.service.order.list;
+package com.example.restaurantapp.service.order.detail;
 
 import com.example.restaurantapp.dataaccess.CustomerRepository;
 import com.example.restaurantapp.enums.OrderPriorityEnum;
@@ -29,7 +29,7 @@ public class RestaurantListOrderServiceDecorator extends ListOrderServiceDecorat
         }
         orderResponse.setNumberOfOrder(getCustomerNumberOfOrder(orderId));
 
-        log.info("Restaurant Order returned {} for {}, ", orderResponse, orderId);
+        log.info("Order detail returned {} for {}, ", orderResponse, orderId);
         return orderResponse;
     }
 

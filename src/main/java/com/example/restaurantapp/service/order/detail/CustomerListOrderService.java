@@ -1,4 +1,4 @@
-package com.example.restaurantapp.service.order.list;
+package com.example.restaurantapp.service.order.detail;
 
 import com.example.restaurantapp.dataaccess.OrderItemRepository;
 import com.example.restaurantapp.dataaccess.OrdersRepository;
@@ -39,7 +39,7 @@ public class CustomerListOrderService {
         List<OrderResponse.FoodDetailResponse> foodDetailResponseList = foodOrderItemDTOList.stream().map(orderMapper::foodDetailResponseMapper).toList();
         OrderResponse orderResponse = orderMapper.orderResponseMapper(orderCustomerDto.get(), foodDetailResponseList);
 
-        log.info("Customer Order returned {} for {}, ", orderResponse, orderId);
+        log.info("Order detail returned {} for {}, ", orderResponse, orderId);
         return orderResponse;
     }
 }

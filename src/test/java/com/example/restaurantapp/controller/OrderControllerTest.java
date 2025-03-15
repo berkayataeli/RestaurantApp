@@ -42,10 +42,10 @@ public class OrderControllerTest {
 
     @Test
     void testListOrdersByOrderId_ShouldReturnOrderResponse_WhenRequestIsValid() throws Exception {
-        Mockito.when(orderService.listOrdersByOrderId(any(ListOrderRequest.class)))
+        Mockito.when(orderService.detail(any(ListOrderRequest.class)))
                 .thenReturn(getDummyOrderResponse());
 
-        mockMvc.perform(post("/api/order/listOrdersByOrderId")
+        mockMvc.perform(post("/api/order/detail")
                         .content(asJsonString(getDummyListOrderRequest())).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));

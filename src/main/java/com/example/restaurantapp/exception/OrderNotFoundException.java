@@ -12,4 +12,8 @@ public class OrderNotFoundException extends RuntimeException {
     public OrderNotFoundException(Long customerId, String message) {
         super(message + " for customerId = " + customerId);
     }
+
+    public OrderNotFoundException(Long customerId, String status, String message) {
+        super(message + ": " + status + " for customerId = " + customerId);
+    }
 }

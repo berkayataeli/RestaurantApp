@@ -3,8 +3,8 @@ package com.example.restaurantapp.config;
 import com.example.restaurantapp.dataaccess.OrderItemRepository;
 import com.example.restaurantapp.dataaccess.OrdersRepository;
 import com.example.restaurantapp.mapper.OrderMapper;
-import com.example.restaurantapp.service.order.list.CustomerListOrderService;
-import com.example.restaurantapp.service.order.list.RestaurantListOrderServiceDecorator;
+import com.example.restaurantapp.service.order.detail.CustomerListOrderService;
+import com.example.restaurantapp.service.order.detail.RestaurantListOrderServiceDecorator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
